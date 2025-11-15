@@ -34,7 +34,7 @@ if uploaded_file is not None:
 
     # Convert to numpy array for model
     img_array = np.array(img)
-    img_array = cv2.resize(img_array, (224, 224))
+    img_array = cv2.resize(img_array, (64, 64))
     img_array = img_array / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
@@ -48,3 +48,4 @@ if uploaded_file is not None:
     st.subheader("Prediction Result")
     st.write(f"**Predicted Sign:** {predicted_class}")
     st.write(f"**Confidence:** {round(confidence * 100, 2)} %")
+

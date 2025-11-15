@@ -1,32 +1,45 @@
 import streamlit as st
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 import numpy as np
+from tensorflow.keras.models import load_model
 from PIL import Image
+import pickle
+import cv2
 
-# Load trained model
+# ---------------------------
+# Load model and labels
+# ---------------------------
 model = load_model("sign_language_cnn_model.h5")
 
-# Class labels (adjust according to your dataset)
-class_labels = ['A', 'B', 'C', 'D', 'E']  # Example
+# Load labels.pkl (35 classes)
+labels = pickle.load(open("labels.pkl", "rb"))
+labels = {v: k for k, v in labels.items()}  # convert index -> label
 
-st.title("Sign Language Detection")
-st.write("Upload an image and the model will predict the sign.")
+# ---------------------------
+# Streamlit UI
+# ---------------------------
+st.title("Sign Language Detection (A-Z, 0-9)")
+st.write("Upload an image of a hand gesture to predict the sign:")
 
-# Image upload
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    img = Image.open(uploaded_file).convert('RGB')
-    st.image(img, caption='Uploaded Image', use_column_width=True)
-    
-    # Preprocess image
-    img = img.resize((64, 64))  # adjust size according to your CNN input
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0) / 255.0
-    
-    # Prediction
+    # Open uploaded image
+    img = Image.open(uploaded_file).convert("RGB")
+    st.image(img, caption="Uploaded Image", use_column_width=True)
+
+    # Convert to numpy array for model
+    img_array = np.array(img)
+    img_array = cv2.resize(img_array, (224, 224))  # resize to model input
+    img_array = img_array / 255.0  # normalize
+    img_array = np.expand_dims(img_array, axis=0)  # add batch dimension
+
+    # Predict
     pred = model.predict(img_array)
-    predicted_class = class_labels[np.argmax(pred)]
-    
-    st.write(f"Predicted Sign: **{predicted_class}**")
+    class_index = int(np.argmax(pred))
+    confidence = float(np.max(pred))
+    predicted_class = labels[class_index]
+
+    # Display results
+    st.subheader("Prediction Result")
+    st.write(f"**Predicted Sign:** {predicted_class}")
+    st.write(f"**Confidence:** {round(confidence * 100, 2)} %")

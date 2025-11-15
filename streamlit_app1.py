@@ -4,15 +4,20 @@ from tensorflow.keras.models import load_model
 from PIL import Image
 import pickle
 import cv2
+import os
 
 # ---------------------------
+# Paths (works for Streamlit Cloud)
+# ---------------------------
+BASE_DIR = os.path.dirname(__file__)
+MODEL_PATH = os.path.join(BASE_DIR, "sign_language_cnn_model.h5")
+LABELS_PATH = os.path.join(BASE_DIR, "labels.pkl")
+
 # Load model and labels
-# ---------------------------
-model = load_model("sign_language_cnn_model.h5")
+model = load_model(MODEL_PATH)
 
-# Load labels.pkl (35 classes)
-labels = pickle.load(open("labels.pkl", "rb"))
-labels = {v: k for k, v in labels.items()}  # convert index -> label
+labels = pickle.load(open(LABELS_PATH, "rb"))
+labels = {v: k for k, v in labels.items()}  # index -> label
 
 # ---------------------------
 # Streamlit UI
@@ -29,9 +34,9 @@ if uploaded_file is not None:
 
     # Convert to numpy array for model
     img_array = np.array(img)
-    img_array = cv2.resize(img_array, (224, 224))  # resize to model input
-    img_array = img_array / 255.0  # normalize
-    img_array = np.expand_dims(img_array, axis=0)  # add batch dimension
+    img_array = cv2.resize(img_array, (224, 224))
+    img_array = img_array / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
 
     # Predict
     pred = model.predict(img_array)
